@@ -1,0 +1,467 @@
+---
+title: "R CODA Club - Creating a descriptives table using gtsummary and other bits and bobs"
+author: "Caitlin A. Howlett"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# Basic descriptives table 
+
+## An example: 
+
+
+```{r echo = FALSE, include=FALSE, warning=FALSE, message=FALSE}
+
+# ----- load libraries -----
+
+library(tidyverse)
+library(gtsummary)
+library(dplyr)
+
+
+# ----- Read in data ------
+data <- read.csv("C:/Users/Caitlin/Dropbox/r_projects/R Coda Club/gtsummary/data.csv")
+
+
+# --- Basic tbl_summary structure ---
+
+# x <-
+#   ., %>%
+#   tbl_summary(
+#     by = ,
+#     label = list(),
+#     statistic = list(),
+#     digits = list(),
+#     type = list(),
+# missing = "ifany",
+# missing_text = "Missing"
+# )
+
+
+# Wherever there are empty cells in the data set, change these cells to "NA" if you want them to count towards missing values
+
+data$gender[data$gender==""] <- NA
+table(is.na(data$gender))
+
+# Create a data frame with all of the variables that you want to display in your descriptives table
+
+df1 <-
+  data %>%
+  select(group, age, gender, education_level, wcst, stroop)
+
+
+# Build elements of the table 
+
+tab1 <- 
+  df1 %>%
+  tbl_summary(
+    by = group,
+    label = list(age ~ "Age in years", gender ~ "Gender", education_level ~ "Education", wcst ~ "WCST score", 
+                 stroop ~ "Stroop score"),
+    statistic = list(age ~ c("{mean} ({sd})", "{min} - {max}"), gender ~ "{n} ({p}%)", education_level ~ "{n} ({p}%)", 
+                     wcst ~ c("{mean} ({sd})", "{min} - {max}"), stroop ~ c("{mean} ({sd})", "{min} - {max}")),
+    digits = list(age ~ (c(1, 2, 0, 0)), wcst ~ (c(1, 2, 0, 0)), stroop ~ (c(1, 2, 0, 0))),
+    type = list(age ~ "continuous2", gender ~ "categorical", education_level ~ "categorical", wcst ~ "continuous2",
+                stroop ~ "continuous2"),
+missing = "ifany",
+missing_text = "Missing"
+) %>%
+  bold_labels()
+
+# Modifying aspects of the table 
+
+modify_descriptives_tab1 <-
+  tab1 %>%
+  modify_header(all_stat_cols() ~ "**{level}**, (n = {n})") %>%
+  modify_caption("**Participant Characteristics** (n = {N})") %>%
+  modify_footnote(update = starts_with("stat_") ~ "Statistics presented: Mdn (IQR); n(%)")
+
+
+# Check distribution of continuous values 
+hist(data$age)
+hist(data$wcst)
+hist(data$stroop)
+
+
+# Replace {mean} ({sd}) with {median} ({p25}, {p75}) for non-normal distributions
+
+
+# Rename the table for simiplicity purposes 
+Table1 <- modify_descriptives_tab1
+
+ 
+
+```
+
+ 
+### Participants
+
+
+Eight adults in the healthy control group had a mean age of `r inline_text(Table1, variable = age, column = stat_1, level = 'Mean (SD)')`. Participant characteristics are displayed in Table 1. 
+
+
+```{r Table 1, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+
+Table1
+
+```
+
+
+# Stacking tables together 
+
+```{r echo=FALSE, include=FALSE, message=FALSE, warning=FALSE}
+
+# Print out of how many different types of conditions (and spelling variations) there are
+
+table(data$diagnosis, useNA = "ifany")
+
+# Turning different spelling/captialisation variations of responses into a TRUE or FALSE conditional statement, so that we can count the number of occurrences of a particular condition 
+
+# Fibromyalgia 
+
+data <-
+  data %>%
+  mutate(
+    diagnosis_fibro = 
+      case_when(
+        diagnosis == "fibro" ~ 1,
+        diagnosis == "fibromyyalgia" ~ 1,
+        diagnosis == "Fibromyalgia" ~ 1,
+        TRUE ~ 0
+      )
+  )
+
+with(data,
+     table(
+       diagnosis, 
+       diagnosis_fibro, 
+       useNA = "ifany"
+     ))
+
+
+# CRPS
+
+data <-
+  data %>%
+  mutate(
+    diagnosis_crps = 
+      case_when(
+        diagnosis == "CRPS" ~ 1,
+        TRUE ~ 0
+      )
+  )
+
+with(data,
+     table(
+       diagnosis, 
+       diagnosis_crps, 
+       useNA = "ifany"
+     ))
+
+
+# Endometriosis
+
+data <-
+  data %>%
+  mutate(
+    diagnosis_endo = 
+      case_when(
+        diagnosis == "endometriosis" ~ 1,
+        TRUE ~ 0
+      )
+  )
+
+with(data,
+     table(
+       diagnosis, 
+       diagnosis_endo, 
+       useNA = "ifany"
+     ))
+
+
+
+# Migraine 
+
+data <-
+  data %>%
+  mutate(
+    diagnosis_mig = 
+      case_when(
+        diagnosis == "migraine" ~ 1,
+        TRUE ~ 0
+      )
+  )
+
+with(data,
+     table(
+       diagnosis, 
+       diagnosis_mig, 
+       useNA = "ifany"
+     ))
+
+
+
+
+data <- 
+  data %>%
+  select(id, group, age, gender, education_level, wcst, stroop, diagnosis_fibro, diagnosis_crps, diagnosis_mig, diagnosis_endo)
+
+
+# Rename variables ----
+data <- rename(data, `Fibromyalgia` = diagnosis_fibro, `Endometriosis` = diagnosis_endo, `Migraine` = diagnosis_mig, `CRPS` = diagnosis_crps)
+
+```
+
+
+
+
+```{r echo=FALSE, include=FALSE, message=FALSE, warning=FALSE}
+
+
+# Wherever there are empty cells in the data set, change these cells to "NA" if you want them to count towards missing values
+data$gender[data$gender==""] <- NA
+table(is.na(data$gender))
+
+# Create a data frame with all of the variables that you want to display in your descriptives table
+
+df2 <- 
+  data %>%
+  select(id, group, age, gender, education_level, wcst, stroop, Fibromyalgia, CRPS, Migraine, Endometriosis)
+
+
+# Create a long data set so that we can count the number of occurrences of a condition for each participant 
+
+df3 <- 
+  df2 %>%
+  pivot_longer(
+    c(-id, -group, -age, -gender, -education_level, -wcst, -stroop),
+    names_to = "pain_diagnosis",
+    values_to = "count") %>%
+  mutate(
+    paindiag_str = ifelse(count == 1, pain_diagnosis, "")
+  )
+
+
+# Create two separate data frames 
+    
+descrip_dat2 <-
+  df2 %>%
+  select(group, age, gender, education_level, wcst, stroop)
+
+descrip_dat3 <-
+  df3 %>%
+  select(group, paindiag_str)
+
+
+# Build the first table (containing our demographic and outcome variables)
+
+tab2 <- 
+  descrip_dat2 %>%
+  tbl_summary(
+    by = group,
+    label = list(age ~ "Age in years", gender ~ "Gender", education_level ~ "Education", wcst ~ "WCST score", stroop ~ "Stroop score"),
+    statistic = list(age ~ c("{mean} ({sd})", "{min} - {max}"), gender ~ "{n} ({p})", education_level ~ "{n} ({p})", 
+                     wcst ~ c("{mean} ({sd})", "{min} - {max}"), stroop ~ c("{mean} ({sd})", "{min} - {max}")),
+    digits = list(age ~ (c(1, 2, 0, 0)), wcst ~ (c(1, 2, 0, 0)), stroop ~ c(1, 2, 0, 0)),
+    type = list(age ~ "continuous2", gender ~ "categorical", education_level ~ "categorical", wcst ~ "continuous2",
+                stroop ~ "continuous2"),
+missing = "ifany",
+missing_text = "Missing"
+) %>%
+  bold_labels()
+
+
+# Modify elements of the first descriptives table 
+
+modify_descriptives_table2 <-
+  tab2 %>%
+  modify_header(all_stat_cols() ~ "**{level}**, (n = {n})") %>%
+  modify_caption("**Participant Characteristics** (n = {N})")
+
+
+tab2 <- modify_descriptives_table2
+
+
+# Build the second table (containing counts of pain diagnoses)
+
+n_hc <- 8 
+n_pp <- 8
+
+tab3 <-
+  descrip_dat3 %>%
+  tbl_summary(
+    by = group,
+    label = list(paindiag_str ~ "Pain diagnosis"),
+    statistic = list(paindiag_str ~ "{n}"),
+    type = list(paindiag_str ~ "categorical"),
+    missing = "ifany",
+    missing_text = "Missing",
+    include = everything()
+  ) %>%
+  bold_labels() 
+  
+
+# Modify elements of the second descriptives table
+
+  tab3$table_body <-
+  tab3$table_body %>%
+  # get rid of empty levels 
+  dplyr::filter(label != "") %>%
+  # add proportions based on column sample size
+  mutate(
+    stat_1 =
+      ifelse(is.na(stat_1), NA, paste0(stat_1, " (", round(100 * as.numeric(stat_1) / n_hc, 0), ")")),
+    stat_2 =
+    ifelse(is.na(stat_2), NA, paste0(stat_2, " (", round(100 * as.numeric(stat_2) / n_pp, 0), ")"))
+  )
+  
+
+Table2 <-
+    tbl_stack(list(
+      modify_descriptives_table2,
+      tab3
+    )) %>%
+    as_kable(.)
+  
+
+```
+
+
+
+```{r Table1, echo=FALSE, results='asis'}
+
+Table2
+```
+
+
+
+# Other useful packages:
+
+- ggstatsplot (presents linear models as visual plots)
+- jtools (similar to ggstatsplot but overlays two models onto a single visual plot)
+- report (automated reporting of results from statistical tests)
+
+
+```{r echo = FALSE, include=FALSE, warning=FALSE, message=FALSE}
+
+# Convert gender to a factor
+
+with(data, table(gender, useNA = "ifany"))
+data$gender <- factor(data$gender)
+data$gender <- relevel(data$gender, ref = "Male") 
+
+class(data$gender)
+
+```
+```{r echo=FALSE, include=FALSE, message=FALSE, warning=FALSE}
+
+# Convert education level to a factor
+
+with(data, table(education_level, useNA = "ifany"))
+data$education_level <- factor(data$education_level)
+data$education_level <- relevel(data$education_level, ref = "High school") 
+
+class(data$education_level)
+
+```
+```{r multiple linear regression model, echo=FALSE, message=FALSE, warning=FALSE}
+
+library(performance)
+
+wcst_model <- lm(wcst ~ group + age + education_level, data = data)
+
+stroop_model <- lm(stroop ~ group + age + education_level, data = data)
+
+summary(wcst_model)
+summary(stroop_model)
+
+car::Anova(wcst_model)
+car::Anova(stroop_model)
+
+# Check model assumptions 
+
+check_model(wcst_model)
+check_model(stroop_model)
+
+
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
+
+Table3 <- lm(wcst ~ group + age + education_level + gender, data = data) %>%
+  tbl_regression() %>%
+  add_global_p()
+
+
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+
+Table3
+
+```
+
+```{r Visualising and reporting final WCST model, echo=FALSE, warning=FALSE, message=FALSE, include=TRUE}
+
+
+# regression plots
+
+library(ggstatsplot)
+ggcoefstats(wcst_model)
+
+# how to change colour palette of plots to make them accessible for people who are have vision deficiencies
+
+ggcoefstats(wcst_model, package = "RColorBrewer", palette = "Dark2")
+ggcoefstats(wcst_model, package = "colorBlindness", palette = "paletteMartin")
+ggcoefstats(wcst_model, package = "colorblindr", palette = "OkabeIto")
+
+
+library(jtools)
+plot_coefs(wcst_model, stroop_model, omit.coefs = NULL, model.names = c("WCST model", "Stroop model"),
+                                                                                       ci_level = 0.95)
+# mathematical equations 
+
+library(equatiomatic)
+extract_eq(wcst_model, use_coefs = TRUE, wrap = TRUE, terms_per_line = 2)
+extract_eq(stroop_model, use_coefs = TRUE, wrap = TRUE, terms_per_line = 2)
+
+
+# print summaries of results for academic reporting 
+
+library(report)
+report(wcst_model)
+report(stroop_model)
+
+```
+
+
+
+
+
+# Useful resources for gtsummary: 
+
+- gtsummary paper: https://journal.r-project.org/archive/2021/RJ-2021-053/RJ-2021-053.pdf
+
+- gtsummary cheatsheet: https://www.rstudio.com/resources/cheatsheets/
+
+- R Ladies STL recently held a workshop with the package developer of gtsummary (Daniel Sjoberg) - the workshop will be posted on the R Ladies STL Youtube channel in a few days time: https://www.youtube.com/channel/UCQ7DcXWJm3es06U7lGmBDkw 
+
+
+
+
+# Citing R packages:
+
+citation("tidyverse")
+
+citation("gtsummary")
+
+citation("report")
+
+citation("equatiomatic")
+
+citation("jtools")
+
+citation("ggstatsplot")
+
+

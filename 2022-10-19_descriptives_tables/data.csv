@@ -1,0 +1,17 @@
+﻿id,group,age ,gender ,education_level,wcst,stroop,diagnosis
+A,pp,18,Male,Higher degree,11,60,fibromyyalgia
+B,hc,51,Female,Tertiary,35,50,
+C,pp,68,Non-binary,Higher degree,9,30,CRPS
+D,pp,63,Female,Higher degree,14,43,endometriosis
+E,hc,28,Female,High school,13,75,
+F,hc,44,Non-binary,Tertiary,17,120,
+G,pp,54,Male,Higher degree,13,46,endometriosis
+H,hc,30,Female,Higher degree,42,34,
+I,hc,26,Female,Higher degree,28,28,
+J,pp,76,Male,High school,14,67,CRPS
+K,hc,45,,Tertiary,56,45,
+L,pp,67,,Higher degree,10,33,Fibromyalgia
+M,hc,19,Male,Higher degree,36,43,
+N,pp,60,Female,Tertiary,15,22,migraine
+O,hc,27,Male,Tertiary,53,24,
+P,pp,41,Female,Tertiary,43,67,fibro
