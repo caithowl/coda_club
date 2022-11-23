@@ -82,20 +82,20 @@ hist(data$age)
 hist(data$wcst)
 hist(data$stroop)
 
-
 # Replace {mean} ({sd}) with {median} ({p25}, {p75}) for non-normal distributions
 
 
-# Rename the table for simiplicity purposes 
+# Rename the table for simplicity purposes 
 Table1 <- modify_descriptives_tab1
 
  
 
 ```
 
+# Inline code:
  
-### Participants
 
+### Participants
 
 Eight adults in the healthy control group had a mean age of `r inline_text(Table1, variable = age, column = stat_1, level = 'Mean (SD)')`. Participant characteristics are displayed in Table 1. 
 
@@ -115,7 +115,7 @@ Table1
 
 table(data$diagnosis, useNA = "ifany")
 
-# Turning different spelling/captialisation variations of responses into a TRUE or FALSE conditional statement, so that we can count the number of occurrences of a particular condition 
+# Turning different spelling/capitalisation variations of responses into a TRUE or FALSE conditional statement, so that we can count the number of occurrences of a particular condition 
 
 # Fibromyalgia 
 
@@ -445,7 +445,7 @@ report(stroop_model)
 
 - gtsummary cheatsheet: https://www.rstudio.com/resources/cheatsheets/
 
-- R Ladies STL recently held a workshop with the package developer of gtsummary (Daniel Sjoberg) - the workshop will be posted on the R Ladies STL Youtube channel in a few days time: https://www.youtube.com/channel/UCQ7DcXWJm3es06U7lGmBDkw 
+- R Ladies STL recently held a workshop with the package developer of gtsummary (Daniel Sjoberg) - the workshop was posted on the R Ladies STL Youtube channel, which can be found here: https://www.youtube.com/channel/UCQ7DcXWJm3es06U7lGmBDkw 
 
 
 
